@@ -7,7 +7,7 @@ mHU8DkAFas3fRZ
 d4f1d2baa651ff79b4f1ff869689bbd3c80b6d9211894b50256c3bdc28f5a649
 ```
 
-数据库相关命令:
+# 数据库相关命令
 
 ```shell
 #登录数据库
@@ -18,7 +18,7 @@ clickhouse-client --user data_manager --password mHU8DkAFas3fRZ.ZwD%Q7 --host 0.
 ```
 
 
-
+# 安装配置
 ```
 clickhouse安装 安装包 clickhouse22_rpm.tar.gz clickhouse_configs.tar.gz
 
