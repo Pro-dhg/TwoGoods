@@ -161,4 +161,10 @@ CREATE TABLE IF NOT EXISTS ods.ods_behavior_data  AS ods.ods_behavior_data_local
 -- 表添加字段或者删除字段 (注意:分布式表中本地表和分布式表都要更改)
 ALTER TABLE 表名称 ON 集群名称 ADD COLUMN 列名称 类型
 
+ALTER TABLE ods.ods_behavior_data_local ON cluster clickhouse_cluster ADD COLUMN uuid UInt64 COMMENT '唯一id'  ;
+ALTER TABLE ods.ods_behavior_data ON cluster clickhouse_cluster ADD COLUMN uuid UInt64 COMMENT '唯一id' ;
+
+ALTER TABLE ods.ods_behavior_data_local ON cluster clickhouse_cluster DROP COLUMN uuid  ;
+ALTER TABLE ods.ods_behavior_data ON cluster clickhouse_cluster ADD DROP COLUMN uuid  ;
+
 ```
