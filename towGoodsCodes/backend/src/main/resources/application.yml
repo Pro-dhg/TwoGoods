@@ -1,0 +1,102 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: resources
+  datasource:
+    url: jdbc:clickhouse://192.168.16.114:8123/rpt?socket_timeout=300000&dataTransferTimeout=300000
+    username: data_backend
+    password: DLKUc4M.ZwD%Q7
+    driver-class-name: ru.yandex.clickhouse.ClickHouseDriver
+    hikari:
+      connection-timeout: 30000
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+  mvc:
+    async:
+      request-timeout: 5000000
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+server:
+  port: 55404
+  tomcat:
+    connection-timeout: 5000000
+
+mybatis:
+  type-aliases-package: com.yamu.data.sample.service.resources.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:config/mapper/*.xml
+#list_todo 待去除完整内容后, 将此处进行删除
+#pagehelper:
+#  helperDialect: mysql
+#  reasonable: true
+#  supportMethodsArguments: true
+#  params: count=countSql
+#  page-size-zero: true
+
+jwt:
+  secret: ems.com^123
+  expire: 86400
+
+config:
+  ## 系统配置延迟查询时间，默认为0，单位为min
+  execution_date_offset: 12
+
+---
+spring:
+  profiles: test
+# 项目配置
+wavepoint:
+  use_jwt: true
+  csv:
+    volume: 10000
+    thread_nums: 10
+    temp_path: /opt/wavepoint/backend/csvs
+    clear_time: 2
+# csv 配置,从上到下依次为: 1:单个csv数据容量 2:每次处理线程数 3:临时文件位置 4: csv文件清除时间
+# 日志配置
+logging:
+  #level 日志等级 指定命名空间的日志输出
+  level:
+    com.yamu.data.service.sample: info
+    com.yamu.data.sample.service.resources.mapper: info
+  #file 指定输出文件的存储路径
+  file:
+    path: /opt/wavepoint/backend/.modules/dns-resources/logs
+    name: /opt/wavepoint/backend/.modules/dns-resources/logs/resources.log
+  #pattern 指定输出场景的日志输出格式
+  pattern:
+    console: "%d %-5level %logger : %msg%n"
+    file: "%d %-5level [%thread] %logger : %msg%n"
+
+---
+# 个性化配置
+spring:
+  profiles: dev
+# 项目配置
+wavepoint:
+  use_jwt: false
+  csv:
+    volume: 10000
+    thread_nums: 10
+    temp_path: csvs/
+    clear_time: 2
+# csv 配置,从上到下依次为: 1:单个csv数据容量 2:每次处理线程数 3:临时文件位置 4: csv文件清除时间
+# 日志配置
+logging:
+  level:
+    com.yamu.data.sample.service.resources: info
+    com.yamu.data.sample.service.resources.mapper: debug
+  file:
+    path: /opt/wavepoint/backend/.modules/dns-resources/logs/
+    name: /opt/wavepoint/backend/.modules/dns-resources/logs/resources.log
+  pattern:
+    console: "%d %-5level %logger : %msg%n"
+    file: "%d %-5level [%thread] %logger : %msg%n"
+
+
