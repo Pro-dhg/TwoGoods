@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.PartnerDomainTopNWebsiteMapper">
+    <!--明细报表：count-->
+    <select id="countDetailReportByPage" resultType="java.lang.Long">
+
+        select count(1) from
+        (
+        select parse_time, website_name from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null">
+                and website_name in
+                (
+                select website_name from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_name
+                order by sum(parse_total_cnt) desc
+                limit ${queryParam.rankNumber}
+                )
+            </if>
+        </where>
+        group by parse_time, website_name
+        )
+    </select>
+    <!--明细报表：byPage-->
+    <select id="findDetailReportByPage" resultType="com.yamu.data.sample.service.resources.entity.po.PartnerDomainTopNWebsite">
+
+        select parse_time,
+            website_name,
+            sum(parse_total_cnt) as parse_total_cnt,
+            sum(parse_success_cnt) as parse_success_cnt,
+            sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+            sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+            sum(within_parse_total_cnt) as within_parse_total_cnt,
+            sum(without_parse_total_cnt) as without_parse_total_cnt,
+            sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+            sum(idc_parse_total_cnt) as idc_parse_total_cnt
+            from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null">
+                and website_name in
+                (
+                select website_name from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_name
+                order by sum(parse_total_cnt) desc
+                limit ${queryParam.rankNumber}
+                )
+            </if>
+        </where>
+        group by parse_time, website_name
+        order by parse_time desc, parse_total_cnt desc
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <!--Top20: 网站排名趋势-->
+    <select id="findTop20ReportGroupByParseTimeByParam" resultType="com.yamu.data.sample.service.resources.entity.po.PartnerDomainTopNWebsite">
+        select
+        parse_time,
+        sum(within_parse_total_cnt) as within_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+                and website_name in (
+                select website_name from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_name order by sum(within_parse_total_cnt) desc limit 20 )
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <!--TopN: 本省 本网率趋势-->
+    <select id="findTopNReportGroupByParseTimeByParam" resultType="com.yamu.data.sample.service.resources.entity.po.PartnerDomainTopNWebsite">
+        select
+        parse_time,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != '' ">
+                and website_name in (
+                select website_name from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_name order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <!--某网站: 资源分布图表-->
+    <select id="findTrendReportGroupByIspByParam" resultType="com.yamu.data.sample.service.resources.entity.po.PartnerDomainTopNWebsite">
+        select  isp, sum(parse_total_cnt) as parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParamOut"/>
+            <if test="queryParam.rankNumber != null">
+                and website_name in (
+                select website_name
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_name order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by if(isp=='','其他',isp) as isp
+        order by parse_total_cnt desc
+    </select>
+
+    <!--某网站: 本省 本网率、CDN IDC-->
+    <select id="findTrendReportGroupByParseTimeByParam" resultType="com.yamu.data.sample.service.resources.entity.po.PartnerDomainTopNWebsite">
+        select
+        parse_time,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParamOut"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != '' ">
+                and website_name in (
+                select website_name from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_name order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <!--图内层、表内外层查询：websiteName用like匹配-->
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;=#{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and     parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.websiteName != null and queryParam.websiteName != ''">and website_name ilike concat('%',#{queryParam.websiteName},'%')</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and   country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and         city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and           district = #{queryParam.district}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code =#{queryParam.districtsCode}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and         isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+    </sql>
+
+    <!--图外层查询：websiteName用=匹配-->
+    <sql id="selectiveParamOut">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.websiteName != null and queryParam.websiteName != ''">and website_name = #{queryParam.websiteName}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+    </sql>
+</mapper>
