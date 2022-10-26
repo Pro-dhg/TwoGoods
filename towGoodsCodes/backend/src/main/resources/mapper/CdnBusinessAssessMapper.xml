@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.CdnBusinessAssessMapper">
+
+    <sql id="selectiveParam">
+        <if test="query.startTime != null and query.startTime != ''">and parse_time &gt;= #{query.startTime}</if>
+        <if test="query.endTime != null and query.endTime != ''">and parse_time &lt; #{query.endTime}</if>
+        <if test="query.business != null and query.business != ''">and business ilike concat('%',#{query.business},'%')</if>
+        <if test="query.serviceProperties != null and query.serviceProperties != ''">and service_properties = #{query.serviceProperties}</if>
+        <if test="query.userType != null and query.userType != ''">and user_type = #{query.userType}</if>
+    </sql>
+    <sql id="selectiveTopNParam">
+        <if test="query.rankNumber != null and query.rankNumber != ''">
+            and business global in (
+                select business
+                from ${queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by business
+                order by sum(parse_total_cnt) desc
+                limit #{query.rankNumber}
+            )
+        </if>
+    </sql>
+    <select id="tableDetail" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnBusinessAssessRespVo">
+        select
+            business,
+            round(avg(score),2) as assessScore,
+            sum(parse_total_cnt) as parseTotal,
+            round(avg(parse_success_rate),4) as sucRate,
+            round(avg(idc_parse_rate),4) as icpRate,
+            round(avg(net_in_parse_rate),4) as localNetRate,
+            round(avg(within_parse_rate),4) as localProRate,
+            round(avg(neighbor_pro_parse_rate),4) as neighborhoodRate
+        from ${queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by business
+        order by assessScore desc
+        limit #{query.limit} offset #{query.offset}
+    </select>
+    <select id="getCount" resultType="java.lang.Long">
+        select count(*) from (
+                select
+                business,
+                round(avg(score),2) as assessScore,
+                sum(parse_total_cnt) as parseTotal,
+                round(avg(parse_success_rate),4) as sucRate,
+                round(avg(idc_parse_rate),4) as icpRate,
+                round(avg(net_in_parse_rate),4) as localNetRate,
+                round(avg(within_parse_rate),4) as localProRate,
+                round(avg(neighbor_pro_parse_rate),4) as neighborhoodRate
+                from ${queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                    <include refid="selectiveTopNParam"/>
+                </where>
+                group by business
+          )
+    </select>
+    <select id="compareTableList"
+            resultType="com.yamu.data.sample.service.resources.entity.vo.CdnBusinessAssessRespVo">
+        select
+        business,
+        round(avg(score),2) as assessScore,
+        sum(parse_total_cnt) as parseTotal,
+        round(avg(parse_success_rate),4) as sucRate,
+        round(avg(idc_parse_rate),4) as icpRate,
+        round(avg(net_in_parse_rate),4) as localNetRate,
+        round(avg(within_parse_rate),4) as localProRate,
+        round(avg(neighbor_pro_parse_rate),4) as neighborhoodRate
+        from ${queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            and business global in
+            <foreach collection="list" item="businessName" index="index" open="(" close=")" separator=",">
+                #{businessName}
+            </foreach>
+        </where>
+        group by business
+    </select>
+    <select id="scoreTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnBusinessAssessRespVo">
+        select
+        parse_time as parseTime,
+        round(avg(score),2) as assessScore
+        from ${queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by parse_time
+    </select>
+    <select id="indicatTrend"
+            resultType="com.yamu.data.sample.service.resources.entity.vo.CdnBusinessAssessRespVo">
+        select
+        parse_time as parseTime,
+        round(avg(net_in_parse_rate),4) as localNetRate,
+        round(avg(parse_success_rate),4) as sucRate,
+        round(avg(idc_parse_rate),4) as icpRate,
+        round(avg(city_in_parse_rate),4) as localCityRate,
+        round(avg(within_parse_rate),4) as localProRate
+        from ${queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by parse_time
+    </select>
+    <select id="rader" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnBusinessAssessRespVo">
+        select
+        round(avg(net_in_parse_rate),4) as localNetRate,
+        round(avg(parse_success_rate),4) as sucRate,
+        round(avg(idc_parse_rate),4) as icpRate,
+        round(avg(city_in_parse_rate),4) as localCityRate,
+        round(avg(within_parse_rate),4) as localProRate,
+        round(avg(neighbor_pro_parse_rate),4) as neighborhoodRate
+        from ${queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+    </select>
+    <select id="scoreCityTrend" resultType="java.util.Map">
+        select user_city as city,round(avg(score),2) as score
+        from ${queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and user_province = (select districts_name from dim.mate_local_isp limit 1)
+        </where>
+        group by user_city
+    </select>
+</mapper>

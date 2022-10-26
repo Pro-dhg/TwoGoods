@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.CdnServiceQualityMapper">
+
+    <select id="getSumData" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityData">
+        select count(distinct business) as businessCnt,count(distinct answer_first_ip) as nodeCnt,
+        businessCnt - count(distinct(case when net_in_parse_total_cnt > 0 then business end)) as netInNoResourcesCnt,
+        businessCnt - count(distinct(case when within_parse_total_cnt > 0 then business end)) as withinNoResourcesCnt,
+        sum(parse_total_cnt) as parseTotalCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt,sum(within_parse_total_cnt) as withinParseTotalCnt,
+        sum(city_and_net_in_parse_total_cnt) as cityAndNetInParseTotalCnt,sum(with_and_net_in_parse_total_cnt) withAndNetInParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+    </select>
+
+    <select id="getMap" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityData">
+        select answer_first_province as name,sum(parse_total_cnt) as parseTotalCnt,count(distinct answer_first_ip) as nodeCnt,
+        sum(parse_success_cnt) as parseSuccessCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and answer_first_country='中国' and answer_first_province !='未知'
+        </where>
+        group by answer_first_province
+        order by parseTotalCnt desc
+    </select>
+
+    <select id="getMapProvince" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityData">
+        select answer_first_city as name,sum(parse_total_cnt) as parseTotalCnt,count(distinct answer_first_ip) as nodeCnt,
+        sum(parse_success_cnt) as parseSuccessCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and answer_first_city !='未知'
+        </where>
+        group by answer_first_city
+        order by parseTotalCnt desc
+    </select>
+
+    <select id="getCdnCoverCnt" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityCdnCoverList">
+        select count(distinct answer_first_province) as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and answer_first_country='中国'
+        </where>
+    </select>
+
+    <select id="getCdnServiceQualityCdnCoverList" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityCdnCoverList">
+        select answer_first_province as name,sum(parse_total_cnt) as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and answer_first_country='中国'
+        </where>
+        group by answer_first_province
+        order by parseTotalCnt desc
+    </select>
+
+    <select id="getCdnCoverCntProvince" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityCdnCoverList">
+        select count(distinct answer_first_city) as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+    </select>
+
+    <select id="getCdnServiceQualityCdnCoverListProvince" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityCdnCoverList">
+        select answer_first_city as name,sum(parse_total_cnt) as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by answer_first_city
+        order by parseTotalCnt desc
+    </select>
+
+    <select id="getResponseResultsTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.ResponseResultsTrend">
+        select sum(parse_noerror_cnt) as parseNoerrorCnt,sum(parse_nxdomain_cnt) as parseNxdomainCnt,
+        sum(parse_servfail_cnt) as parseServfailCnt,sum(parse_refused_cnt) as parseRefusedCnt,sum(parse_other_cnt) as parseOtherCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+    </select>
+
+    <select id="getRateTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityData">
+        select parse_time,sum(parse_total_cnt) as parseTotalCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt,
+        sum(within_parse_total_cnt) as withinParseTotalCnt,sum(city_in_parse_total_cnt) as cityInParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <select id="getDispatchTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.ResourceCdnServerDispatchTrend">
+        select parse_time,count(distinct answer_first_ip) as serverCnt,
+        count(distinct(case when net_in_parse_total_cnt > 0 then answer_first_ip end)) netInServerCnt,
+        serverCnt-netInServerCnt as netOutServerCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <select id="getDownloadData" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityDownLoadData">
+        select business,sum(parse_total_cnt) as parseTotalCnt,sum(parseTotalCnt) over () as sumCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt,
+        count(distinct(case when answer_first_isp = #{queryParam.isp} then answer_first_city end)) as netInCityCnt,
+        count(distinct(case when answer_first_isp != #{queryParam.isp} then answer_first_city end)) as netOutCityCnt,
+        count(distinct(case when answer_first_province = #{queryParam.province} then answer_first_city end)) as withinCityCnt,
+        count(distinct(case when answer_first_province != #{queryParam.province} then answer_first_city end)) as withOutCityCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by business
+        order by parseTotalCnt desc
+    </select>
+
+    <select id="getDownloadDataCity" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityDownLoadData">
+        select business,user_city,sum(parse_total_cnt) as userCnt,sum(case when answer_first_city =user_city  then parse_total_cnt else 0 end) as answerFirstCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and user_province = #{queryParam.province}
+        </where>
+        group by business,user_city
+    </select>
+
+    <select id="getDownloadDataNearProvince" resultType="com.yamu.data.sample.service.resources.entity.vo.CdnServiceQualityDownLoadData">
+        select business,user_province,sum(parse_total_cnt) as userCnt,sum(case when answer_first_province = user_province then parse_total_cnt else 0 end) as answerFirstCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+            and user_province global in
+            <foreach collection="provinceList" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+        </where>
+        group by business,user_province
+    </select>
+
+    <select id="getTopNCdn" resultType="java.lang.String">
+        select business from (
+            select business,sum(parse_total_cnt) as parse_total_cnt
+            from ${queryTable}
+            <where> 1=1
+                <include refid="selectiveParam"/>
+            </where>
+            group by business
+            order by parse_total_cnt desc
+            limit #{queryParam.rankNumber}
+        )
+    </select>
+
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt; #{queryParam.endTime}</if>
+        <if test="queryParam.business != null and queryParam.business != ''">and business = #{queryParam.business}</if>
+        <if test="queryParam.businessLike != null and queryParam.businessLike != ''">and business ilike concat('%',#{queryParam.businessLike},'%')</if>
+        <if test="queryParam.serviceProperties != null and queryParam.serviceProperties != ''">and service_properties = #{queryParam.serviceProperties}</if>
+        <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+        <if test="queryParam.answerFirstProvince != null and queryParam.answerFirstProvince != ''">and answer_first_province = #{queryParam.answerFirstProvince}</if>
+    </sql>
+
+    <sql id="selectiveTopNParam">
+        <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+            and business global in (
+                select business from (
+                    select business,sum(parse_total_cnt) as parse_total_cnt
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by business
+                    order by parse_total_cnt desc
+                    limit #{queryParam.rankNumber}
+                )
+            )
+        </if>
+    </sql>
+
+</mapper>
