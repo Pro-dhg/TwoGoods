@@ -13,7 +13,12 @@ d4f1d2baa651ff79b4f1ff869689bbd3c80b6d9211894b50256c3bdc28f5a649
 #登录数据库
 clickhouse-client --user data_manager --password mHU8DkAFas3fRZ --host 0.0.0.0 --port 9000 
 #数据库建表
-clickhouse-client --user data_manager --password mHU8DkAFas3fRZ.ZwD%Q7 --host 0.0.0.0 --port 9000 --lock_acquire_timeout 36000 --multiquery <  ./src.sql
+clickhouse-client --user data_manager --password mHU8DkAFas3fRZ.ZwD%Q7 --host 0.0.0.0 --port 9000 --lock_acquire_timeout 36000 --multiquery <  ./ods.sql
+#数据库信息导出
+clickhouse-client -h 127.0.0.1 --port 9000 --user data_engine --password DLKUc4M.ZwD%Q7 --query=" \
+select * \
+from ods.ods_behavior_data \
+FORMAT CSVWithNames" > ./ods_behavior_data.csv
 
 ```
 
@@ -114,3 +119,46 @@ sudo systemctl status clickhouse-server
 sudo tail -f /var/log/clickhouse-server/clickhouse-server.log
 ```
 
+```shell
+#下面是clickhouse同步pg的方法，pg放一些维表什么的
+-- 启用物化引擎
+set allow_experimental_database_materialized_postgresql=1;
+
+-- 创建物化库
+DROP DATABASE IF EXISTS dim;
+CREATE DATABASE IF NOT EXISTS dim
+ENGINE = MaterializedPostgreSQL('127.0.0.1:5432', '数据库', '用户名', '用户密码') ;
+
+#具体做法可参考百度,搜MaterializedPostgreSQL，就有一大堆
+```
+
+# 下面是clickhouse的建表
+```shell
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS ods;
+
+-- 创建表
+-- 缓存原始本地表
+DROP TABLE IF EXISTS ods.ods_behavior_data_local ;
+CREATE TABLE ods.ods_behavior_data_local
+(
+    `id` String  COMMENT 'id',
+    `name` String  COMMENT '姓名',
+    `parse_timestamp` DateTime  COMMENT '解析时间',
+    `behavior` String  COMMENT '行为'
+)
+ENGINE = MergeTree
+PARTITION BY formatDateTime(parse_timestamp, '%Y%m%d%H')
+ORDER BY (parse_timestamp, id, name)
+TTL parse_timestamp + toIntervalDay(14)
+SETTINGS index_granularity = 8192;
+
+
+-- 建分布式表
+DROP TABLE IF EXISTS ods.ods_behavior_data ;
+CREATE TABLE IF NOT EXISTS ods.ods_behavior_data  AS ods.ods_behavior_data_local ENGINE = Distributed(clickhouse_cluster, ods, ods_behavior_data_local,rand());
+
+-- 表添加字段或者删除字段 (注意:分布式表中本地表和分布式表都要更改)
+ALTER TABLE 表名称 ON 集群名称 ADD COLUMN 列名称 类型
+
+```
