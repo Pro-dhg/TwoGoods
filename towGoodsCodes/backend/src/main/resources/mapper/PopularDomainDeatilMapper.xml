@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.PopularDomainDetailMapper">
+
+    <select id="countFindDomainDetailByParam" resultType="java.lang.Long">
+        select count(1) from (
+            select domain_name, answer_first_ip, answer_first_ip_province, answer_first_ip_city, answer_first_ip_isp
+            from ${resultTable}
+            <where>
+                <include refid="selectiveParamNotContainParseTime"/>
+            </where>
+            group by domain_name, answer_first_ip, answer_first_ip_province, answer_first_ip_city, answer_first_ip_isp
+        )
+    </select>
+
+    <select id="findDomainDetailByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.PopularDomainDetail">
+        select domain_name, answer_first_ip, answer_first_ip_province, answer_first_ip_city, answer_first_ip_isp, sum(parse_total_cnt) as parse_total_cnt
+        from ${resultTable}
+        <where>
+            <include refid="selectiveParamNotContainParseTime"/>
+        </where>
+        group by domain_name, answer_first_ip, answer_first_ip_province, answer_first_ip_city, answer_first_ip_isp
+        order by parse_total_cnt desc
+        limit ${queryParam.offset}, ${queryParam.limit}
+    </select>
+
+    <sql id="selectiveParamNotContainParseTime">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name = #{queryParam.domainName}</if>
+        <if test="queryParam.answerFirstIp != null and queryParam.answerFirstIp != ''">and answer_first_ip = #{queryParam.answerFirstIp}</if>
+        <if test="queryParam.answerFirstIpProvince != null and queryParam.answerFirstIpProvince != ''">and answer_first_ip_province = #{queryParam.answerFirstIpProvince}</if>
+        <if test="queryParam.answerFirstIpCity != null and queryParam.answerFirstIpCity != ''">and answer_first_ip_city = #{queryParam.answerFirstIpCity}</if>
+        <if test="queryParam.answerFirstIpIsp != null and queryParam.answerFirstIpIsp != ''">and answer_first_ip_isp = #{queryParam.answerFirstIpIsp}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+</mapper>

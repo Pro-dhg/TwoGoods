@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.PopularDomainFlowMapper">
+    <select id="countQueryGroupByDomainName" resultType="java.lang.Long">
+        select count(1) from (
+        select
+            rpt.domain_name as domain_name
+            <if test="queryParam.distributeState != null and queryParam.distributeState != ''">
+                , dddr.domain_name as dial_domain_name
+            </if>
+        <choose>
+            <when test="queryParam.distributeState != null and queryParam.distributeState != '' and queryParam.distributeState == '已下发'">
+                from ${queryParam.queryTable} rpt INNER JOIN dim.dim_dial_domain_record dddr on rpt.domain_name = dddr.domain_name
+            </when>
+            <when test="queryParam.distributeState != null and queryParam.distributeState != '' and queryParam.distributeState == '未下发'">
+                from ${queryParam.queryTable} rpt left anti join dim.dim_dial_domain_record dddr on rpt.domain_name = dddr.domain_name
+            </when>
+            <otherwise>
+                from ${queryParam.queryTable} rpt
+            </otherwise>
+        </choose>
+        <where>
+            <include refid="selectiveParam"/>
+        </where>
+        group by rpt.domain_name
+        <if test="queryParam.distributeState != null and queryParam.distributeState != ''">
+            , dddr.domain_name
+        </if>
+        <if test="queryParam.rankNumber != null">
+            limit ${queryParam.rankNumber}
+        </if>
+        )
+    </select>
+    <select id="queryGroupByDomainName"
+            resultType="com.yamu.data.sample.service.resources.entity.po.PopularDomainFlow">
+        select
+        rpt.domain_name as domain_name,
+        dddr.domain_name as dial_domain_name,
+        sum(net_out_parse_flow_total) as net_out_parse_flow_total,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(parse_flow_total) as parse_flow_total,
+        sum(net_in_parse_flow_total) as net_in_parse_flow_total,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable} rpt LEFT OUTER JOIN dim.dim_dial_domain_record dddr on rpt.domain_name = dddr.domain_name
+        <where>
+            <include refid="selectiveParam"/>
+            <choose>
+                <when test="queryParam.rankNumber == null and queryParam.distributeState != null and queryParam.distributeState != ''">
+                    <if test="queryParam.distributeState == '已下发'">
+                        and domain_name in (
+                        select domain_name from dim.dim_dial_domain_record
+                        )
+                    </if>
+                    <if test="queryParam.distributeState == '未下发'">
+                        and domain_name not in (
+                            select domain_name from dim.dim_dial_domain_record
+                        )
+                    </if>
+                </when>
+                <when test="queryParam.rankNumber != null">
+                    and domain_name in (
+                    select flow.domain_name as domain_name
+                    from ${queryParam.queryTable} flow
+                    <if test="queryParam.distributeState == '已下发'">
+                        INNER JOIN dim.dim_dial_domain_record dddr on flow.domain_name = dddr.domain_name
+                    </if>
+                    <if test="queryParam.distributeState == '未下发'">
+                        left anti join dim.dim_dial_domain_record dddr on flow.domain_name = dddr.domain_name
+                    </if>
+                    <where>
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by domain_name
+                    order by sum(net_out_parse_flow_total) desc limit ${queryParam.rankNumber}
+                    )
+                </when>
+            </choose>
+        </where>
+        group by rpt.domain_name, dddr.domain_name
+        order by ${queryParam.orderBy}
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+    <select id="queryGroupByParseTime"
+            resultType="com.yamu.data.sample.service.resources.entity.po.PopularDomainFlow">
+        select parse_time,
+        sum(net_out_parse_flow_total) as net_out_parse_flow_total,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(parse_flow_total) as parse_flow_total,
+        sum(net_in_parse_flow_total) as net_in_parse_flow_total,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParamEqualsDomainName"/>
+        </where>
+        group by parse_time
+        order by ${queryParam.orderBy}
+    </select>
+    <select id="findTopDomain" resultType="java.lang.String">
+        select
+            domain_name
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+        </where>
+        group by domain_name
+        order by sum(net_out_parse_flow_total) desc
+        limit ${queryParam.rankNumber}
+    </select>
+
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name ilike concat('%',#{queryParam.domainName},'%')</if>
+        <if test="queryParam.domainType != null and queryParam.domainType != ''">and domain_type = #{queryParam.domainType}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+
+    <sql id="selectiveParamEqualsDomainName">
+        <if test="queryParam.startTime != null">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name = #{queryParam.domainName}</if>
+        <if test="queryParam.domainType != null and queryParam.domainType != ''">and domain_type = #{queryParam.domainType}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+</mapper>
