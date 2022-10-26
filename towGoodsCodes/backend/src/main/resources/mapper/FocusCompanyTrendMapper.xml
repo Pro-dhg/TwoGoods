@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.FocusCompanyTrendMapper">
+    <!--重点公司访问趋势分析: 访问重点公司趋势明细:条数-->
+    <select id="countTrendDetailByPage" resultType="java.lang.Long">
+        select count(1) from
+        (
+        select
+        parse_time,
+        company_short_name
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            , sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+            sum(a_record_parse_total_cnt) as a_record_parse_total_cnt
+        </if>
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null">
+                and company_short_name global in (
+                select
+                company_short_name
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by company_short_name
+                <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                    having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                    between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+                </if>
+                order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by parse_time, company_short_name
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            having if(a_record_parse_total_cnt == 0, 0.0, divide(net_in_parse_total_cnt * 100, a_record_parse_total_cnt))
+            between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+        </if>
+        )
+    </select>
+    <!--重点公司访问趋势分析: 访问重点公司趋势明细:数据-->
+    <select id="findTrendDetailByPage" resultType="com.yamu.data.sample.service.resources.entity.po.FocusCompanyTrend">
+        select parse_time,
+            company_short_name,
+            sum(parse_total_cnt) as parse_total_cnt,
+            sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+            sum(parse_success_cnt) as parse_success_cnt,
+            sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+            sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+            sum(within_parse_total_cnt) as within_parse_total_cnt,
+            sum(without_parse_total_cnt) as without_parse_total_cnt,
+            sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+            sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null">
+                and company_short_name global in (
+                    select
+                    company_short_name
+                    from ${queryParam.queryTable}
+                    <where>
+                        <include refid="selectiveParam"/>
+                    </where>
+                group by company_short_name
+                <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                    having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                    between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+                </if>
+                order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by parse_time, company_short_name
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            having if(a_record_parse_total_cnt == 0, 0.0, divide(net_in_parse_total_cnt * 100, a_record_parse_total_cnt))
+            between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+        </if>
+        order by ${queryParam.orderBy}
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <!--重点公司访问趋势分析: 重点公司资源分布图表-->
+    <select id="findTrendReportGroupByIspByParam" resultType="com.yamu.data.sample.service.resources.entity.po.FocusCompanyTrend">
+        select  isp, sum(a_record_parse_total_cnt) as a_record_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParamOut"/>
+            <if test="queryParam.rankNumber != null">
+                and company_short_name global in (
+                select
+                company_short_name
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by company_short_name order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by answer_first_isp as isp
+        order by a_record_parse_total_cnt desc
+    </select>
+
+    <!--访问量趋势、本省本网率、CDN IDC-->
+    <select id="findTrendReportGroupByParseTimeByParam" resultType="com.yamu.data.sample.service.resources.entity.po.FocusCompanyTrend">
+        select
+            parse_time,
+            sum(parse_total_cnt) as parse_total_cnt,
+            sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+            sum(parse_success_cnt) as parse_success_cnt,
+            sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+            sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+            sum(within_parse_total_cnt) as within_parse_total_cnt,
+            sum(without_parse_total_cnt) as without_parse_total_cnt,
+            sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+            sum(idc_parse_total_cnt) as idc_parse_total_cnt
+            from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParamOut"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != '' ">
+                and company_short_name global in (
+                    select company_short_name from ${queryParam.queryTable}
+                    <where>
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by company_short_name order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <select id="countTrendDetailByPageAll" resultType="java.lang.Long">
+        select count(1) from
+        (
+        select
+        company_short_name
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            , sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+            sum(a_record_parse_total_cnt) as a_record_parse_total_cnt
+        </if>
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null">
+                and company_short_name global in (
+                select
+                company_short_name
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by company_short_name
+                <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                    having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                    between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+                </if>
+                order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by company_short_name
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            having if(a_record_parse_total_cnt == 0, 0.0, divide(net_in_parse_total_cnt * 100, a_record_parse_total_cnt))
+            between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+        </if>
+        )
+    </select>
+
+    <select id="findTrendDetailByPageAll" resultType="com.yamu.data.sample.service.resources.entity.po.FocusCompanyTrend">
+        select
+        company_short_name,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null">
+                and company_short_name global in (
+                select
+                company_short_name
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by company_short_name
+                <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                    having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                    between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+                </if>
+                order by sum(parse_total_cnt) desc limit ${queryParam.rankNumber} )
+            </if>
+        </where>
+        group by company_short_name
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            having if(a_record_parse_total_cnt == 0, 0.0, divide(net_in_parse_total_cnt * 100, a_record_parse_total_cnt))
+            between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+        </if>
+        order by ${queryParam.orderBy}
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <!--图形外层查询：companyShortName用=匹配-->
+    <sql id="selectiveParamOut">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.companyShortName != null and queryParam.companyShortName != ''">and company_short_name = #{queryParam.companyShortName}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+    <!--图内层、表内外层查询：companyShortName用like匹配-->
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.companyShortName != null and queryParam.companyShortName != ''">and company_short_name ilike concat('%',#{queryParam.companyShortName},'%')</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+</mapper>
