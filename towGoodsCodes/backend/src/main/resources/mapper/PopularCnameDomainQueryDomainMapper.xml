@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.PopularCnameDomainQueryDomainMapper">
+
+    <select id="getTotal" resultType="java.lang.Long">
+        select count(1) from (
+            select
+            cname as cname,
+            <choose>
+                <when test="queryParam.domainMerge != null and queryParam.domainMerge != '' and queryParam.domainMerge==1 ">
+                    arrayStringConcat(arrayDistinct(groupArray(website_app_name)),',') as websiteAppName,
+                    arrayStringConcat(arrayDistinct(groupArray(company_short_name)),',') as companyShortName,
+                    arrayStringConcat(arrayDistinct(groupArray(domain_name)),',') as domainName,
+                    arrayStringConcat(arrayDistinct(groupArray(domain_website_app_name)),',') as domainWebsiteAppName,
+                    arrayStringConcat(arrayDistinct(groupArray(domain_company_short_name)),',') as domainCompanyShortName,
+                </when>
+                <otherwise>
+                    website_app_name as websiteAppName,
+                    company_short_name as companyShortName,
+                    domain_name as domainName,
+                    domain_website_app_name as domainWebsiteAppName,
+                    domain_company_short_name as domainCompanyShortName,
+                </otherwise>
+            </choose>
+            sum(net_out_parse_flow_total) as netOutParseFlowTotal ,
+            sum(net_out_parse_total_cnt) as netOutParseTotalCnt,
+            sum(parse_total_cnt) as parseTotalCnt ,
+            sum(parse_success_cnt) as parseSuccessCnt,
+            sum(parse_flow_total) as parseFlowTotal ,
+            sum(net_in_parse_flow_total) as netInParseFlowTotal,
+            sum(net_in_parse_total_cnt) as netInParseTotalCnt ,
+            sum(within_parse_total_cnt) as withinParseTotalCnt ,
+            sum(without_parse_total_cnt) as withoutParseTotalCnt
+            from ${queryTable}
+            <where> 1=1
+                <include refid="selectiveParam"/>
+                <include refid="selectiveTopNParam"/>
+            </where>
+            group by cname
+            <choose>
+                <when test="queryParam.domainMerge != null and queryParam.domainMerge != ''  and queryParam.domainMerge==1">
+                </when>
+                <otherwise>
+                    ,website_app_name ,
+                    company_short_name ,
+                    domain_name ,
+                    domain_website_app_name ,
+                    domain_company_short_name
+                </otherwise>
+            </choose>
+        )
+    </select>
+
+    <select id="getDataList" resultType="com.yamu.data.sample.service.resources.entity.po.PopularCnameDomainList">
+        select cname as cname,
+
+        <choose>
+            <when test="queryParam.domainMerge != null and queryParam.domainMerge != ''  and queryParam.domainMerge==1">
+                arrayStringConcat(arrayDistinct(groupArray(website_app_name)),',') as websiteAppName,
+                arrayStringConcat(arrayDistinct(groupArray(company_short_name)),',') as companyShortName,
+                arrayStringConcat(arrayDistinct(groupArray(domain_name)),',') as domainName,
+                arrayStringConcat(arrayDistinct(groupArray(domain_website_app_name)),',') as domainWebsiteAppName,
+                arrayStringConcat(arrayDistinct(groupArray(domain_company_short_name)),',') as domainCompanyShortName,
+            </when>
+            <otherwise>
+                website_app_name as websiteAppName,
+                company_short_name as companyShortName,
+                domain_name as domainName,
+                domain_website_app_name as domainWebsiteAppName,
+                domain_company_short_name as domainCompanyShortName,
+            </otherwise>
+        </choose>
+
+        sum(net_out_parse_flow_total) as netOutParseFlowTotal ,
+        sum(net_out_parse_total_cnt) as netOutParseTotalCnt,
+        sum(parse_total_cnt) as parseTotalCnt ,
+        sum(parse_success_cnt) as parseSuccessCnt,
+        sum(parse_flow_total) as parseFlowTotal ,
+        sum(net_in_parse_flow_total) as netInParseFlowTotal,
+        sum(net_in_parse_total_cnt) as netInParseTotalCnt ,
+        sum(within_parse_total_cnt) as withinParseTotalCnt ,
+        sum(without_parse_total_cnt) as withoutParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <include refid="selectiveTopNParam"/>
+        </where>
+        group by cname
+        <choose>
+            <when test="queryParam.domainMerge != null and queryParam.domainMerge != ''  and queryParam.domainMerge==1 ">
+            </when>
+            <otherwise>
+                ,website_app_name ,
+                company_short_name ,
+                domain_name ,
+                domain_website_app_name ,
+                domain_company_short_name
+            </otherwise>
+        </choose>
+        order by ${orderByStr}
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <select id="getFlowTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.PopularCnameDomainFlowTrend">
+        select parse_time as parseTime,
+        sum(net_out_parse_flow_total) as netOutParseFlowTotal
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectTrendParam"/>
+        </where>
+        group by parse_time
+        <if test="queryParam.domainMerge != null and queryParam.domainMerge != ''  and queryParam.domainMerge==1 ">,cname</if>
+        order by parse_time
+    </select>
+    <select id="getNetInTrend" resultType="com.yamu.data.sample.service.resources.entity.po.PopularCnameDomainList">
+        select parse_time as parseTime,
+        sum(net_out_parse_flow_total) as netOutParseFlowTotal ,
+        sum(net_out_parse_total_cnt) as netOutParseTotalCnt,
+        sum(parse_total_cnt) as parseTotalCnt ,
+        sum(parse_success_cnt) as parseSuccessCnt,
+        sum(parse_flow_total) as parseFlowTotal ,
+        sum(net_in_parse_flow_total) as netInParseFlowTotal,
+        sum(net_in_parse_total_cnt) as netInParseTotalCnt ,
+        sum(within_parse_total_cnt) as withinParseTotalCnt ,
+        sum(without_parse_total_cnt) as withoutParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectTrendParam"/>
+        </where>
+        group by parse_time
+        <if test="queryParam.domainMerge != null and queryParam.domainMerge != ''  and queryParam.domainMerge==1 ">,cname</if>
+        order by parse_time
+    </select>
+
+    <select id="getDownload" resultType="com.yamu.data.sample.service.resources.entity.vo.PopularCnameDomainDowmloadList">
+        select
+          cname as cname,
+          domain_name as domainName,
+          answer_first as answerFirst,
+          province ,
+          isp ,
+          parse_total_cnt as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectTrendParam"/>
+        </where>
+        order by parse_time desc
+    </select>
+
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt; #{queryParam.endTime}</if>
+        <if test="queryParam.cname != null and queryParam.cname != ''">and cname ilike concat('%',#{queryParam.cname},'%')</if>
+        <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name ilike concat('%',#{queryParam.domainName},'%')</if>
+        <if test="queryParam.domainType != null and queryParam.domainType != ''">and domain_type = #{queryParam.domainType}</if>
+        <if test="queryParam.domainType != null and queryParam.domainType != ''">
+            <choose>
+                <when test="queryParam.domainType == '全部'">
+                </when>
+                <when test="queryParam.domainType == 'CDN域名'">
+                    and domain_type = 'CDN'
+                </when>
+                <otherwise>
+                    and domain_type = #{queryParam.domainType}
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+    <sql id="selectiveTopNParam">
+        <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+            and cname global in (
+            select cname from (
+            select cname,sum(parse_total_cnt) as parse_total_cnt
+            from ${queryTable}
+            <where> 1=1
+                <include refid="selectiveParam"/>
+            </where>
+            group by cname
+            order by parse_total_cnt desc
+            limit #{queryParam.rankNumber}
+            )
+            )
+        </if>
+    </sql>
+    <sql id="selectTrendParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt; #{queryParam.endTime}</if>
+        <choose>
+            <when test="queryParam.domainMerge != null and queryParam.domainMerge != ''   and queryParam.domainMerge==1">
+                <if test="queryParam.cname != null and queryParam.cname != ''">and cname = #{queryParam.cname} </if>
+            </when>
+            <otherwise>
+                <if test="queryParam.cname != null and queryParam.cname != ''">and cname = #{queryParam.cname} </if>
+                <if test="queryParam.websiteAppName != null and queryParam.websiteAppName != ''">and website_app_name = #{queryParam.websiteAppName} </if>
+                <if test="queryParam.companyShortName != null and queryParam.companyShortName != ''">and company_short_name = #{queryParam.companyShortName} </if>
+                <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name = #{queryParam.domainName} </if>
+                <if test="queryParam.domainWebsiteAppName != null and queryParam.domainWebsiteAppName != ''">and domain_website_app_name = #{queryParam.domainWebsiteAppName} </if>
+                <if test="queryParam.domainCompanyShortName != null and queryParam.domainCompanyShortName != ''">and domain_company_short_name = #{queryParam.domainCompanyShortName} </if>
+                <if test="queryParam.domainType != null and queryParam.domainType != ''">
+                    <choose>
+                        <when test="queryParam.domainType == '全部'">
+                        </when>
+                        <when test="queryParam.domainType == 'CDN域名'">
+                            and domain_type = 'CDN'
+                        </when>
+                        <otherwise>
+                            and domain_type = #{queryParam.domainType}
+                        </otherwise>
+                    </choose>
+                </if>
+            </otherwise>
+        </choose>
+
+    </sql>
+</mapper>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.ResourceDomainNameServerMapper">
+
+    <select id="getTotal" resultType="java.lang.Long">
+        select count(1) from (
+        select
+        domain_name,sum(parse_total_cnt) as parseTotalCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt,
+        sum(net_out_parse_total_cnt) as netOutParseTotalCnt,count(distinct answer_first) as serverCnt,
+        count(distinct(case when net_in_parse_total_cnt > 0 then answer_first end)) netInServerCnt,
+        count(distinct(case when net_out_parse_total_cnt > 0 then answer_first end)) netOutServerCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+        </where>
+        group by domain_name
+        order by parseTotalCnt desc
+        <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+            limit #{queryParam.rankNumber}
+        </if>
+        )
+    </select>
+
+    <select id="getList" resultType="com.yamu.data.sample.service.resources.entity.vo.ResourceCdnServerList">
+        select * from (
+        select domain_name,sum(parse_total_cnt) as parseTotalCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt,
+        sum(net_out_parse_total_cnt) as netOutParseTotalCnt,count(distinct answer_first) as serverCnt,
+        count(distinct(case when net_in_parse_total_cnt > 0 then answer_first end)) netInServerCnt,
+        count(distinct(case when net_out_parse_total_cnt > 0 then answer_first end)) netOutServerCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+        </where>
+        group by domain_name
+        order by parseTotalCnt desc
+        <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+            limit #{queryParam.rankNumber}
+        </if>
+        )
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <select id="getTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.ResourceCdnServerTrend">
+        select parse_time,sum(parse_total_cnt) as parseTotalCnt,sum(net_in_parse_total_cnt) as netInParseTotalCnt,
+        sum(net_out_parse_total_cnt) as netOutParseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <select id="getDispatchTrend" resultType="com.yamu.data.sample.service.resources.entity.vo.ResourceCdnServerDispatchTrend">
+        select parse_time,count(distinct answer_first) as serverCnt,
+        count(distinct(case when net_in_parse_total_cnt > 0 then answer_first end)) netInServerCnt,
+        count(distinct(case when net_out_parse_total_cnt > 0 then answer_first end)) netOutServerCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <select id="getDetailListTotal" resultType="java.lang.Long">
+        select count(1) from (
+        select
+        answer_first as answerFirst,answer_first_province as answerFirstProvince,
+        answer_first_isp as answerFirstIsp,answer_first_server as answerFirstServer,
+        sum(parse_total_cnt) as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+        </where>
+        group by answer_first,answer_first_province,answer_first_isp,answer_first_server
+        )
+    </select>
+
+    <select id="getDetailList" resultType="com.yamu.data.sample.service.resources.entity.vo.ResourceCdnServerDetailList">
+        select
+        answer_first as answerFirst,answer_first_province as answerFirstProvince,
+        answer_first_isp as answerFirstIsp,answer_first_server as answerFirstServer,
+        sum(parse_total_cnt) as parseTotalCnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+        </where>
+        group by answer_first,answer_first_province,answer_first_isp,answer_first_server
+        order by parseTotalCnt desc
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt; #{queryParam.endTime}</if>
+        <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+        <if test="queryParam.ipType != null and queryParam.ipType != ''">and ip_type = #{queryParam.ipType}</if>
+        <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name = #{queryParam.domainName}</if>
+        <if test="queryParam.domainNameList != null and queryParam.domainNameList != ''">
+            <trim prefix="and (" suffix=")" suffixOverrides="or">
+                <foreach collection="queryParam.domainNameList" item="domainName">
+                    <if test="domainName != null and domainName !=''"> domain_name ilike concat('%' , #{domainName}, '%') or</if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+</mapper>
