@@ -9,7 +9,7 @@
         <relativePath/>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.yamu.data.sample.service.modules</groupId>
+    <groupId>com.two.modules</groupId>
     <artifactId>resources</artifactId>
     <packaging>jar</packaging>
 
@@ -18,8 +18,6 @@
         <maven.compiler.source>11</maven.compiler.source>
         <java.version>11</java.version>
         <springfox.version>2.9.2</springfox.version>
-        <sonar.projectKey>wavepoint-ng_business-modules_dns-resources_AYArxPmIVDIgluss9axQ</sonar.projectKey>
-        <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
     </properties>
 
     <dependencies>
@@ -140,6 +138,13 @@
             <artifactId>swagger-models</artifactId>
             <version>1.5.22</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+
 
         <!--升级了clickhouse 和 swagger中guava的依赖版本-->
         <dependency>

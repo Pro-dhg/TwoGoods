@@ -2,7 +2,7 @@ spring:
   profiles:
     active: dev
   application:
-    name: resources
+    name: twoGoods
   datasource:
     url: jdbc:clickhouse://192.168.16.114:8123/rpt?socket_timeout=300000&dataTransferTimeout=300000
     username: data_backend
@@ -27,7 +27,7 @@ server:
     connection-timeout: 5000000
 
 mybatis:
-  type-aliases-package: com.yamu.data.sample.service.resources.entity
+  type-aliases-package: com.two.service.entity
   configuration:
     map-underscore-to-camel-case: true
   mapper-locations: classpath*:config/mapper/*.xml
