@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/service/user/userName/")
-@Api(value = "热点域名分析", tags = "CNAME域名反查域名API")
+@Api(value = "用户分析", tags = "用户分析API")
 public class UserNameController {
 
     @Autowired

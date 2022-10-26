@@ -1,4 +1,4 @@
-package config;
+package com.two.service.common.config;
 
 import com.google.common.base.Predicates;
 import org.springframework.context.annotation.Bean;
@@ -34,10 +34,10 @@ public class SwaggerConfig {
 
     private ApiInfo adminApiInfo(){
         return new ApiInfoBuilder()
-                .title("尚融宝后台管理系统--api文档")
-                .description("尚融宝后台管理系统接口描述")
+                .title("二货后台管理系统--api文档")
+                .description("二货后台管理系统接口描述")
                 .version("1.0")
-                .contact(new Contact("李燕茹","http://baidu.com","728831102@qq.com"))
+                .contact(new Contact("溜达.逮幸福","http://baidu.com","625820867@qq.com"))
                 .build();
     }
 }
