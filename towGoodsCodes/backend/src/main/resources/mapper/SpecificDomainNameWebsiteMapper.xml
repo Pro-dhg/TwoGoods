@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.SpecificDomainNameWebsiteMapper">
+
+    <select id="queryDataGroupByWebsiteTypeByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select website_type,
+               sum(parse_total_cnt) as parse_total_cnt,
+               sum(parse_success_cnt) as parse_success_cnt,
+               sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+               sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+               sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+               sum(within_parse_total_cnt) as within_parse_total_cnt,
+               sum(without_parse_total_cnt) as without_parse_total_cnt,
+               sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+               sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+        </where>
+        group by if(website_type is null or website_type = '', '未知', website_type) as website_type
+        <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+            having if(a_record_parse_total_cnt == 0, 0.0, divide(net_in_parse_total_cnt * 100, a_record_parse_total_cnt))
+            between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+        </if>
+        order by ${queryParam.orderBy}
+        <if test="queryParam.limit != null and queryParam.limit!=''">
+            limit #{queryParam.limit}
+            <if test="queryParam.offset != null and queryParam.offset != ''">
+                offset #{queryParam.offset}
+            </if>
+        </if>
+    </select>
+    <select id="countQueryDataGroupByWebsiteTypeByParam" resultType="java.lang.Long">
+        select count(1) from (
+            select website_type
+            from ${queryParam.queryTable}
+            <where>
+                <include refid="selectiveParam"/>
+            </where>
+            group by website_type
+            <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+            </if>
+        )
+    </select>
+    <select id="queryDataGroupByAllParseTimeByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select parse_time,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+            and website_type global in (
+                select website_type
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by website_type
+                <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                    having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                    between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+                </if>
+                order by sum(parse_total_cnt) desc
+                <if test="queryParam.rankNumber != null  and queryParam.rankNumber !=''">
+                    limit ${queryParam.rankNumber}
+                </if>
+            )
+        </where>
+        group by parse_time
+        order by parse_time
+    </select>
+
+    <select id="queryDataGroupByEveryParseTimeByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select parse_time,
+               sum(parse_total_cnt)         as parse_total_cnt,
+               sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+               sum(parse_success_cnt)       as parse_success_cnt,
+               sum(net_in_parse_total_cnt)  as net_in_parse_total_cnt,
+               sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+               sum(within_parse_total_cnt)  as within_parse_total_cnt,
+               sum(without_parse_total_cnt) as without_parse_total_cnt,
+               sum(cdn_parse_total_cnt)     as cdn_parse_total_cnt,
+               sum(idc_parse_total_cnt)     as idc_parse_total_cnt
+        from (
+                 select parse_time,
+                        sum(parse_total_cnt)         as parse_total_cnt,
+                        sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+                        sum(parse_success_cnt)       as parse_success_cnt,
+                        sum(net_in_parse_total_cnt)  as net_in_parse_total_cnt,
+                        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+                        sum(within_parse_total_cnt)  as within_parse_total_cnt,
+                        sum(without_parse_total_cnt) as without_parse_total_cnt,
+                        sum(cdn_parse_total_cnt)     as cdn_parse_total_cnt,
+                        sum(idc_parse_total_cnt)     as idc_parse_total_cnt,
+                        row_number()                    over( partition by parse_time order by parse_total_cnt desc) as rank_number
+                 from ${queryParam.queryTable}
+                 <where>
+                     <include refid="selectiveParam"/>
+                 </where>
+        group by parse_time, website_type
+        )
+        <where>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber!= ''">
+               and rank_number &lt;= #{queryParam.rankNumber}
+            </if>
+        </where>
+        group by parse_time
+        order by parse_time
+        settings allow_experimental_window_functions = 1
+    </select>
+    <select id="findTrendReportGroupByIspByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select
+            isp,
+            sum(a_record_parse_total_cnt) as a_record_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+        </where>
+        group by answer_first_isp as isp
+        order by a_record_parse_total_cnt desc
+    </select>
+    <select id="queryDataGroupByParseTimeAndWebsiteTypeByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select  parse_time,
+                website_type,
+                parse_total_cnt,
+                a_record_parse_total_cnt,
+                parse_success_cnt,
+                net_in_parse_total_cnt,
+                net_out_parse_total_cnt,
+                within_parse_total_cnt,
+                without_parse_total_cnt,
+                cdn_parse_total_cnt,
+                idc_parse_total_cnt,
+                rank_number
+        from (
+            select parse_time, website_type,
+            sum(parse_total_cnt) as parse_total_cnt,
+            sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+            sum(parse_success_cnt) as parse_success_cnt,
+            sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+            sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+            sum(within_parse_total_cnt) as within_parse_total_cnt,
+            sum(without_parse_total_cnt) as without_parse_total_cnt,
+            sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+            sum(idc_parse_total_cnt) as idc_parse_total_cnt,
+            row_number() over (partition by parse_time order by parse_total_cnt desc) as rank_number
+            from ${queryParam.queryTable}
+            <where>
+                <include refid="selectiveParam"/>
+            </where>
+            group by parse_time, if(website_type is null or website_type = '', '未知', website_type) as website_type
+            <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                having if(a_record_parse_total_cnt == 0, 0.0, divide(net_in_parse_total_cnt * 100, a_record_parse_total_cnt))
+                between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+            </if>
+        )
+        <where>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                rank_number &lt;= #{queryParam.rankNumber}
+            </if>
+        </where>
+        order by ${queryParam.orderBy}
+        <if test="queryParam.limit != null and queryParam.limit!=''">
+            limit #{queryParam.limit}
+            <if test="queryParam.offset != null and queryParam.offset != ''">
+                offset #{queryParam.offset}
+            </if>
+        </if>
+        settings allow_experimental_window_functions = 1
+    </select>
+    <select id="countQueryDataGroupByParseTimeAndWebsiteTypeByParam" resultType="java.lang.Long">
+        select count(1) from (
+            select * from (
+                select parse_time, website_type,
+                sum(parse_total_cnt) as parse_total_cnt,
+                row_number() over (partition by parse_time order by parse_total_cnt desc) as rank_number
+                from ${queryParam.queryTable}
+                <where>
+                    <include refid="selectiveParam"/>
+                </where>
+                group by parse_time, website_type
+                <if test="queryParam.netInRateMin != null and queryParam.netInRateMax != null">
+                    having if(sum(a_record_parse_total_cnt) == 0, 0.0, divide(sum(net_in_parse_total_cnt) * 100, sum(a_record_parse_total_cnt)))
+                    between #{queryParam.netInRateMin} and #{queryParam.netInRateMax}
+                </if>
+            )
+            <where>
+                <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                    rank_number &lt;= #{queryParam.rankNumber}
+                </if>
+            </where>
+        )
+        settings allow_experimental_window_functions = 1
+    </select>
+    <select id="queryLastTimeDataGroupByWebsiteTypeByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select website_type,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+                and website_type in
+                <foreach collection="queryList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+        </where>
+        group by if(website_type is null or website_type = '', '未知', website_type) as website_type
+    </select>
+    <select id="queryLastTimeDataGroupByParseTimeAndWebsiteTypeByParam"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainNameWebsiteDetail">
+        select parse_time, website_type,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+        sum(parse_success_cnt) as parse_success_cnt,
+        sum(net_in_parse_total_cnt) as net_in_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt,
+        sum(within_parse_total_cnt) as within_parse_total_cnt,
+        sum(without_parse_total_cnt) as without_parse_total_cnt,
+        sum(cdn_parse_total_cnt) as cdn_parse_total_cnt,
+        sum(idc_parse_total_cnt) as idc_parse_total_cnt,
+        row_number() over (partition by parse_time order by parse_total_cnt desc) as rank_number
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveParam"/>
+                and website_type in
+                <foreach collection="queryList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+        </where>
+        group by parse_time, if(website_type is null or website_type = '', '未知', website_type) as website_type
+        order by parse_time desc, parse_total_cnt desc
+        settings allow_experimental_window_functions = 1
+    </select>
+
+    <select id="findIspOfDomainNetOut" resultType="java.lang.String">
+        select answer_first_isp
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveDetailParam"/>
+        </where>
+        group by answer_first_isp
+        order by sum(a_record_parse_total_cnt) desc
+    </select>
+
+    <select id="countDomainNetOutList" resultType="java.lang.Long">
+        select count(1) from
+        (
+        select
+        domain_name,
+        answer_first_isp
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveDetailParam"/>
+        </where>
+        group by domain_name, answer_first_isp
+        )
+    </select>
+
+    <select id="findDomainNetOutList"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainWebsiteNetOutDetail">
+        select
+        domain_name,
+        answer_first_isp,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(a_record_parse_total_cnt) as a_record_parse_total_cnt,
+        sum(net_out_parse_total_cnt) as net_out_parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveDetailParam"/>
+        </where>
+        group by domain_name, answer_first_isp
+        order by parse_total_cnt desc
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <select id="countDomainNetOutDetailList" resultType="java.lang.Long">
+        select count(1) from
+        (
+        select
+        answer_first_ip,
+        answer_first_province,
+        answer_first_city,
+        answer_first_isp
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveDetailParam"/>
+        </where>
+        group by answer_first_ip, answer_first_province, answer_first_city, answer_first_isp
+        )
+    </select>
+    <select id="findDomainNetOutDetailList"
+            resultType="com.yamu.data.sample.service.resources.entity.po.SpecificDomainWebsiteNetOutDetail">
+        select
+        answer_first_ip,
+        answer_first_province,
+        answer_first_city,
+        answer_first_isp,
+        sum(parse_total_cnt) as parse_total_cnt
+        from ${queryParam.queryTable}
+        <where>
+            <include refid="selectiveDetailParam"/>
+        </where>
+        group by answer_first_ip, answer_first_province, answer_first_city, answer_first_isp
+        order by parse_total_cnt desc
+        limit #{queryParam.offset}, #{queryParam.limit}
+    </select>
+
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.websiteType != null and queryParam.websiteType !=''">and website_type = #{queryParam.websiteType}</if>
+        <if test="queryParam.domainTypeKey != null and queryParam.domainTypeKey != ''">and domain_type_key = #{queryParam.domainTypeKey}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+
+    <sql id="selectiveParamNotKey">
+        <if test="queryParam.startTime != null">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.domainType != null and queryParam.domainType != ''">and domain_type = #{queryParam.domainType}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+
+    <sql id="selectiveDetailParam">
+        <if test="queryParam.startTime != null">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.websiteType != null and queryParam.websiteType !=''">and website_type = #{queryParam.websiteType}</if>
+        <if test="queryParam.domainTypeKey != null and queryParam.domainTypeKey != ''">and domain_type_key = #{queryParam.domainTypeKey}</if>
+        <if test="queryParam.districtsCode != null and queryParam.districtsCode != ''">and districts_code = #{queryParam.districtsCode}</if>
+        <if test="queryParam.country != null and queryParam.country != ''">and country = #{queryParam.country}</if>
+        <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+        <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+        <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+        <if test="queryParam.isp != null and queryParam.isp != ''">and isp = #{queryParam.isp}</if>
+        <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+        <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+        <if test="queryParam.answerFirstIsp != null and queryParam.answerFirstIsp != ''">and answer_first_isp = #{queryParam.answerFirstIsp}</if>
+        <if test="queryParam.domainName != null and queryParam.domainName != ''">and domain_name = #{queryParam.domainName}</if>
+        <if test="queryParam.queryTime != null and queryParam.queryTime != ''">and parse_time = #{queryParam.queryTime}</if>
+        <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+    </sql>
+
+    <select id="findUserSource"
+            resultType="com.yamu.data.sample.service.resources.entity.po.ResourceWebsiteUserSource">
+        select
+        answer_first_city,
+        website_type as websiteAppName,
+        sum(parse_total_cnt) as parse_total_cnt,
+        sum(parse_total_cnt) over (PARTITION by website_type ) as ptc
+        from ${queryParam.queryTable}
+        <where>
+            <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+            <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+            <if test="queryParam.websiteType != null and queryParam.websiteType != ''">and website_type = #{queryParam.websiteType}</if>
+            <if test="queryParam.ipType != null and queryParam.ipType != ''">and ip_type = #{queryParam.ipType}</if>
+            <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+            <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+            <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+            <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+            <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+            <if test="queryParam.queryTime != null and queryParam.queryTime != ''">and parse_time = #{queryParam.queryTime}</if>
+            <if test="queryParam.domainTypeKey != null and queryParam.domainTypeKey != ''">and domain_type_key = #{queryParam.domainTypeKey}</if>
+            <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+            <if test = "(queryParam.rankNumber != null and queryParam.rankNumber != '') and (queryParam.websiteType == null or queryParam.websiteType == '')">
+                and website_type global in (
+                select website_type
+                from ${queryParam.queryTable}
+                <where>
+                    <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+                    <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+                    <if test="queryParam.websiteType != null and queryParam.websiteType != ''">and website_type = #{queryParam.websiteType}</if>
+                    <if test="queryParam.ipType != null and queryParam.ipType != ''">and ip_type = #{queryParam.ipType}</if>
+                    <if test="queryParam.userType != null and queryParam.userType != ''">and user_type = #{queryParam.userType}</if>
+                    <if test="queryParam.province != null and queryParam.province != ''">and province = #{queryParam.province}</if>
+                    <if test="queryParam.city != null and queryParam.city != ''">and city = #{queryParam.city}</if>
+                    <if test="queryParam.district != null and queryParam.district != ''">and district = #{queryParam.district}</if>
+                    <if test="queryParam.ispCode != null and queryParam.ispCode != ''">and isp_code = #{queryParam.ispCode}</if>
+                    <if test="queryParam.queryTime != null and queryParam.queryTime != ''">and parse_time = #{queryParam.queryTime}</if>
+                    <if test="queryParam.domainTypeKey != null and queryParam.domainTypeKey != ''">and domain_type_key = #{queryParam.domainTypeKey}</if>
+                    <if test="queryParam.serverNodeName !=null and queryParam.serverNodeName !=''">and server_node_name = #{queryParam.serverNodeName}</if>
+                </where>
+                group by website_type
+                order by sum(parse_total_cnt) desc limit #{queryParam.rankNumber}
+                )
+            </if>
+        </where>
+        group by answer_first_city,website_type
+        order by ptc desc,website_type,parse_total_cnt desc
+    </select>
+
+</mapper>

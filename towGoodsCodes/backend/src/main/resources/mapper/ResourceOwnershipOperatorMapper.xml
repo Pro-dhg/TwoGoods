@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yamu.data.sample.service.resources.mapper.ResourceOwnershipOperatorMapper">
+
+    <select id="getDataListTotal" resultType="java.lang.Long">
+        SELECT count(*) from (
+        select
+        sum(parse_total_cnt) as parse_total_cnt,
+        <if test="queryParam.statistics != null and queryParam.statistics == 'ownership'">
+            answer_first_province,answer_first_city
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'isp'">
+            answer_first_isp
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'oAndIsp'">
+            answer_first_isp,answer_first_province,answer_first_city
+        </if>
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                <if test="queryParam.topNType != null and queryParam.topNType == '域名'">
+                    and domain_name global in (
+                    select domain_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by domain_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '网站'">
+                    and website_app_name global in (
+                    select website_app_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_app_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '分类'">
+                    and website_type global in (
+                    select website_type
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_type
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '公司'">
+                    and company_short_name global in (
+                    select company_short_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by company_short_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+            </if>
+        </where>
+        group by
+        <if test="queryParam.statistics != null and queryParam.statistics == 'ownership'">
+            answer_first_province,answer_first_city
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'isp'">
+            answer_first_isp
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'oAndIsp'">
+            answer_first_isp,answer_first_province,answer_first_city
+        </if>
+        order by parse_total_cnt desc)
+    </select>
+
+    <select id="getDataList" resultType="com.yamu.data.sample.service.resources.entity.bo.OwnershipOperatorListBO">
+        select
+        sum(parse_total_cnt) as parse_total_cnt,sum(a_parse_total_cnt) as v4Cnt,
+        sum(aaaa_parse_total_cnt) as v6Cnt,sum(parse_success_cnt) as parse_success_cnt,sum(parse_fail_cnt) as parse_fail_cnt,
+        <if test="queryParam.statistics != null and queryParam.statistics == 'ownership'">
+            answer_first_province,answer_first_city
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'isp'">
+            answer_first_isp
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'oAndIsp'">
+            answer_first_isp,answer_first_province,answer_first_city
+        </if>
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                <if test="queryParam.topNType != null and queryParam.topNType == '域名'">
+                    and domain_name global in (
+                    select domain_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by domain_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '网站'">
+                    and website_app_name global in (
+                    select website_app_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_app_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '分类'">
+                    and website_type global in (
+                    select website_type
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_type
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '公司'">
+                    and company_short_name global in (
+                    select company_short_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by company_short_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+            </if>
+        </where>
+        group by
+        <if test="queryParam.statistics != null and queryParam.statistics == 'ownership'">
+            answer_first_province,answer_first_city
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'isp'">
+            answer_first_isp
+        </if>
+        <if test="queryParam.statistics != null and queryParam.statistics == 'oAndIsp'">
+            answer_first_isp,answer_first_province,answer_first_city
+        </if>
+        order by parse_total_cnt desc
+        limit ${queryParam.offset}, ${queryParam.limit}
+    </select>
+
+    <select id="getOperatorProportion" resultType="com.yamu.data.sample.service.resources.entity.bo.OperatorProportionBO">
+        select answer_first_isp,sum(parse_total_cnt) as parse_total_cnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                <if test="queryParam.topNType != null and queryParam.topNType == '域名'">
+                    and domain_name global in (
+                    select domain_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by domain_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '网站'">
+                    and website_app_name global in (
+                    select website_app_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_app_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '分类'">
+                    and website_type global in (
+                    select website_type
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_type
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '公司'">
+                    and company_short_name global in (
+                    select company_short_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by company_short_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+            </if>
+        </where>
+        group by answer_first_isp
+    </select>
+
+    <select id="resourceDistributionProvince"
+            resultType="com.yamu.data.sample.service.resources.entity.po.ResourceDistributionProvinceData">
+        select answer_first_province,sum(parse_total_cnt) as parse_total_cnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                <if test="queryParam.topNType != null and queryParam.topNType == '域名'">
+                    and domain_name global in (
+                    select domain_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by domain_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '网站'">
+                    and website_app_name global in (
+                    select website_app_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_app_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '分类'">
+                    and website_type global in (
+                    select website_type
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_type
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '公司'">
+                    and company_short_name global in (
+                    select company_short_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by company_short_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+            </if>
+        </where>
+        group by answer_first_province
+        order by parse_total_cnt desc
+    </select>
+
+    <select id="resourceDistributionProvinceDetail"
+            resultType="com.yamu.data.sample.service.resources.entity.po.ResourceDistributionProvinceDetail">
+        select answer_first_province,answer_first_isp,sum(parse_total_cnt) as parse_total_cnt
+        from ${queryTable}
+        <where> 1=1
+            <include refid="selectiveParam"/>
+            <if test="queryParam.rankNumber != null and queryParam.rankNumber != ''">
+                <if test="queryParam.topNType != null and queryParam.topNType == '域名'">
+                    and domain_name global in (
+                    select domain_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by domain_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '网站'">
+                    and website_app_name global in (
+                    select website_app_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_app_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '分类'">
+                    and website_type global in (
+                    select website_type
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by website_type
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+                <if test="queryParam.topNType != null and queryParam.topNType == '公司'">
+                    and company_short_name global in (
+                    select company_short_name
+                    from ${queryTable}
+                    <where> 1=1
+                        <include refid="selectiveParam"/>
+                    </where>
+                    group by company_short_name
+                    order by sum(parse_total_cnt) desc
+                    limit #{queryParam.rankNumber})
+                </if>
+            </if>
+        </where>
+        group by answer_first_province , answer_first_isp
+        order by answer_first_province,parse_total_cnt desc
+    </select>
+
+    <sql id="selectiveParam">
+        <if test="queryParam.startTime != null and queryParam.startTime != ''">and parse_time &gt;= #{queryParam.startTime}</if>
+        <if test="queryParam.endTime != null and queryParam.endTime != ''">and parse_time &lt;= #{queryParam.endTime}</if>
+        <if test="queryParam.netType != null and queryParam.netType != ''">and net_type = #{queryParam.netType}</if>
+        <if test="queryParam.userCity != null and queryParam.userCity != '' and queryParam.userCity != '其他'">and user_city = #{queryParam.userCity}</if>
+        <if test="queryParam.userCity != null and queryParam.userCity == '其他'">and user_province != #{queryParam.thisProvince}</if>
+        <if test="queryParam.provinceList != null and queryParam.provinceList.size >0">
+            and (answer_first_province global in
+            <foreach item="item" collection="queryParam.provinceList" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+            <if test="queryParam.abroadFlag != null and queryParam.abroadFlag ">or (answer_first_country != '中国' and answer_first_country != '未知')</if>
+            )
+        </if>
+        <if test="queryParam.ispList != null and queryParam.ispList.size >0">
+            and answer_first_isp global in
+            <foreach item="item" collection="queryParam.ispList" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryParam.provinceList == null or queryParam.provinceList.size == 0">
+            <if test="queryParam.abroadFlag != null and queryParam.abroadFlag ">and answer_first_country != '中国' and answer_first_country != '未知'</if>
+        </if>
+    </sql>
+
+</mapper>
