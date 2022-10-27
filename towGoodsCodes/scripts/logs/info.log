@@ -1,0 +1,9 @@
+2022-10-27 15:52:49 [INFO] : wedotest
+2022-10-27 15:54:51 [INFO] : rsp.text=<html>
+<head><title>502 Bad Gateway</title></head>
+<body>
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx/1.21.1</center>
+</body>
+</html>
+

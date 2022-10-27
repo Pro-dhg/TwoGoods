@@ -24,23 +24,23 @@ public class SwaggerConfig {
      * @return
      */
     @Bean
-    public Docket coreApiConfig(){
+    public Docket docket() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .apiInfo(adminApiInfo())
-                .groupName("adminApi")
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com/two/service/controller"))
-                //只显示admin下面的路径
-                .paths(Predicates.and(PathSelectors.regex("/admin/.*")))
+                .apis(RequestHandlerSelectors.basePackage("com.two.service.controller"))
+                .build()
+                .useDefaultResponseMessages(false)
+                .apiInfo(apiInfo());
+    }
+
+    private ApiInfo apiInfo() {
+        return new ApiInfoBuilder()
+                .title("二货后台管理系统--api文档")
+                .description("swagger文档")
+                .version("1.0.0")
+                .license("twoGoods.com")
+                .contact(new Contact("","",""))
                 .build();
     }
 
-    private ApiInfo adminApiInfo(){
-        return new ApiInfoBuilder()
-                .title("二货后台管理系统--api文档")
-                .description("二货后台管理系统接口描述")
-                .version("1.0")
-                .contact(new Contact("溜达.逮幸福","http://baidu.com","625820867@qq.com"))
-                .build();
-    }
 }
