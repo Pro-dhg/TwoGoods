@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface UserNameMapper {
 
-    Long getTotal(@Param("queryParam") UserNameParam uerNameParam);
+    Long getTotal(@Param("queryParam") UserNameParam uerNameParam , @Param("queryTable")String queryTable);
 
-    List<UserNameListVO> getDataList(@Param("queryParam") UserNameParam uerNameParam);
+    List<UserNameListVO> getDataList(@Param("queryParam") UserNameParam uerNameParam , @Param("queryTable")String queryTable);
 }

@@ -23,9 +23,10 @@ public class UserNameService {
 
     public UserNameListDataVO dataList(UserNameParam uerNameParam) {
 
+        String tableName = "two_goods.dim_user_user_local" ;
         UserNameListDataVO userNameListDataVO = new UserNameListDataVO();
-        Long total = userNameMapper.getTotal(uerNameParam);
-        List<UserNameListVO> dataList = userNameMapper.getDataList(uerNameParam);
+        Long total = userNameMapper.getTotal(uerNameParam,tableName);
+        List<UserNameListVO> dataList = userNameMapper.getDataList(uerNameParam,tableName);
 
         userNameListDataVO.setTotal(total);
         userNameListDataVO.setData(dataList);
