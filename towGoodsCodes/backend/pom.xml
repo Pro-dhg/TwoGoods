@@ -9,7 +9,7 @@
         <relativePath/>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.yamu.data.sample.service.modules</groupId>
+    <groupId>com.two.modules</groupId>
     <artifactId>resources</artifactId>
     <packaging>jar</packaging>
 
@@ -18,11 +18,19 @@
         <maven.compiler.source>11</maven.compiler.source>
         <java.version>11</java.version>
         <springfox.version>2.9.2</springfox.version>
-        <sonar.projectKey>wavepoint-ng_business-modules_dns-resources_AYArxPmIVDIgluss9axQ</sonar.projectKey>
-        <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
     </properties>
 
-    <dependencies>
+       <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <version>9.0.41</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -50,27 +58,7 @@
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>2.1.2</version>
         </dependency>
-        <!--junit test       -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.6.2</version>
-            <scope>test</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-        </dependency>
-
-
-        <!--        公共模块依赖-->
-        <dependency>
-            <groupId>com.yamu.data.sample.service</groupId>
-            <artifactId>yamu-data-product-service-common</artifactId>
-            <version>1.2.0-RELEASE</version>
-        </dependency>
         <!--clickhouse-->
         <dependency>
             <groupId>ru.yandex.clickhouse</groupId>
@@ -83,12 +71,7 @@
             <artifactId>java-jwt</artifactId>
             <version>3.2.0</version>
         </dependency>
-        <!--        apollo-->
-        <dependency>
-            <groupId>com.ctrip.framework.apollo</groupId>
-            <artifactId>apollo-client</artifactId>
-            <version>1.7.0</version>
-        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.itextpdf/itextpdf -->
         <dependency>
             <groupId>com.itextpdf</groupId>
@@ -118,12 +101,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- swagger依赖 -->
-        <dependency>
-            <groupId>org.springframework.integration</groupId>
-            <artifactId>spring-integration-http</artifactId>
-        </dependency>
-        <!-- Swagger2 -->
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger2</artifactId>
@@ -135,13 +112,8 @@
             <version>${springfox.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-models</artifactId>
-            <version>1.5.22</version>
-        </dependency>
 
-        <!--升级了clickhouse 和 swagger中guava的依赖版本-->
+        <!--升级clickhouse 和 swagger中guava的依赖版本-->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -199,7 +171,7 @@
                     <archive>
                         <!-- 清单文件 -->
                         <manifest>
-                            <mainClass>com.yamu.data.sample.service.resources.ResourcesApplication</mainClass>
+                            <mainClass>com.two.service.TwoGoodsApplication</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
