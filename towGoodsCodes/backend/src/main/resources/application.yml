@@ -4,9 +4,9 @@ spring:
   application:
     name: twoGoods
   datasource:
-    url: jdbc:clickhouse://192.168.16.114:8123/rpt?socket_timeout=300000&dataTransferTimeout=300000
-    username: data_backend
-    password: DLKUc4M.ZwD%Q7
+    url: jdbc:clickhouse://1.15.66.155:8123/?socket_timeout=300000&dataTransferTimeout=300000
+    username: data_manager
+    password: mHU8DkAFas3fRZ
     driver-class-name: ru.yandex.clickhouse.ClickHouseDriver
     hikari:
       connection-timeout: 30000

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @DESC cname域名反查域名
  */
 @RestController
-@RequestMapping("/service/user/userName/")
+@RequestMapping("/service/user/userName")
 @Api(value = "用户分析", tags = "用户分析API")
 public class UserNameController {
 
