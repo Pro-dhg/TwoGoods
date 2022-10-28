@@ -40,4 +40,5 @@
  docker inspect 容器id #查看容器的详细信息
  docker inspect -f '{{.ID}}' 容器名称   #查看镜像的长的ID
  docker update --restart=always 容器名称    #开机自动启动容器
+ docker system df -v #查看哪个容器占据空间大
 ```
