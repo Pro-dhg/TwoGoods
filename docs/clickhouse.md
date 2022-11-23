@@ -168,3 +168,18 @@ ALTER TABLE ods.ods_behavior_data_local ON cluster clickhouse_cluster DROP COLUM
 ALTER TABLE ods.ods_behavior_data ON cluster clickhouse_cluster ADD DROP COLUMN uuid  ;
 
 ```
+
+```
+-- 经常使用的sql
+select if(1>2,1,2) ;
+select if(1>2 or 1>3 or match(lower('123'),'123') ,4,5);
+select multiIf(1>2,1,2>1,8,8) ;
+select case when 1>2 then 1 else 2 end ;
+select case when 1>2 then 1
+when 1>2 then 1
+when 1>2 then 1
+else 2 end ;
+select concat('123','321');
+select splitByChar(',','123,234,345')[1];
+select cutToFirstSignificantSubdomain('0.0.0.0.0.0.0.0.0.0.0.0.2.1.0.0.5.2.0.0.0.0.b.0.4.4.c.8.9.0.4.2.ip6.arpa') ;
+```
