@@ -183,3 +183,12 @@ select concat('123','321');
 select splitByChar(',','123,234,345')[1];
 select cutToFirstSignificantSubdomain('0.0.0.0.0.0.0.0.0.0.0.0.2.1.0.0.5.2.0.0.0.0.b.0.4.4.c.8.9.0.4.2.ip6.arpa') ;
 ```
+
+
+
+```
+--清除ch分区数据
+select 'alter table '||database||'.'||table||' drop partition \''||partition||'\';' from system.parts
+where database = 'rpt' and table = 'rpt_resource_specific_domain_name_cname_detail_1d_real'
+order by partition asc;
+ --执行出现的命令就行
