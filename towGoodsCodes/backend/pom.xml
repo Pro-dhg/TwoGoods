@@ -119,7 +119,12 @@
             <artifactId>guava</artifactId>
             <version>31.0.1-jre</version>
         </dependency>
-    </dependencies>
+           <dependency>
+               <groupId>cn.hutool</groupId>
+               <artifactId>hutool-all</artifactId>
+               <version>5.1.1</version>
+           </dependency>
+       </dependencies>
 
     <build>
         <finalName>resources</finalName>

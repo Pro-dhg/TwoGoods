@@ -4,6 +4,7 @@ import com.two.service.entity.po.UserNameParam;
 import com.two.service.entity.vo.UserNameListDataVO;
 import com.two.service.entity.vo.UserNameListVO;
 import com.two.service.mapper.UserNameMapper;
+import com.two.service.utils.ExecutorDynamicService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,26 @@ public class UserNameService {
         userNameListDataVO.setTotal(total);
         userNameListDataVO.setData(dataList);
 
+        ExecutorDynamicService.EXECUTOR_SERVICE.submit(new Task(total));
+
         return userNameListDataVO;
+    }
+    class Task implements Runnable {
+
+        private final Long total;
+        public Task(Long total) {
+            this.total = total;
+        }
+        @Override
+        public void run() {
+            try {
+                System.out.println(total);
+            }  catch (Exception e) {
+                System.err.println(e);
+            } finally {
+                System.out.println("111");
+            }
+        }
     }
 
 }
