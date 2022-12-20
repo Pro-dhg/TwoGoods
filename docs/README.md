@@ -30,4 +30,4 @@
 
 [百度图片](https://www.baidu.com/s?tn=68018901_20_oem_dg&ie=utf-8&wd=%E6%87%92%E6%B4%8B%E6%B4%8B)
 
-![](https://github.com/Pro-dhg/TwoGoods/blob/main/img/Mr.L.png)
+![image](https://github.com/Pro-dhg/TwoGoods/blob/main/img/Mr.L.png)
